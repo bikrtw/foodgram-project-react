@@ -6,13 +6,13 @@ User = get_user_model()
 
 
 class Ingredient(models.Model):
-    name = models.TextField(max_length=255, db_index=True)
+    name = models.TextField(max_length=255, db_index=True, unique=True)
     unit = models.TextField(max_length=20)
 
 
 class Tag(models.Model):
-    name = models.TextField(max_length=255, db_index=True)
-    slug = models.SlugField()
+    name = models.TextField(max_length=255, db_index=True, unique=True)
+    slug = models.SlugField(unique=True)
     color = models.TextField(
         max_length=7,
         validators=[RegexValidator(regex=r'#[0-9,A-F]{6}')],
@@ -25,7 +25,7 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
-    name = models.TextField(max_length=255)
+    name = models.TextField(max_length=255, unique=True)
     image = models.ImageField()
     text = models.TextField()
     cooking_time = models.IntegerField(
@@ -45,6 +45,8 @@ class Subscription(models.Model):
         related_name='subscribed',
     )
 
+    # TODO unique validation
+
 
 class RecipeTag(models.Model):
     recipe = models.ForeignKey(
@@ -57,6 +59,8 @@ class RecipeTag(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
+
+    # TODO unique validation
 
 
 class ShoppingCart(models.Model):
@@ -71,6 +75,8 @@ class ShoppingCart(models.Model):
         related_name='shopping_cart_user'
     )
 
+    # TODO unique validation
+
 
 class FavoriteRecipe(models.Model):
     user = models.ForeignKey(
@@ -83,4 +89,3 @@ class FavoriteRecipe(models.Model):
         on_delete=models.CASCADE,
         related_name='favorites_user'
     )
-

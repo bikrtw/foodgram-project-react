@@ -1,7 +1,7 @@
 from rest_framework import viewsets, mixins
 
 from . import serializers
-from ..food import models
+from food import models
 
 
 class UserViewSet:

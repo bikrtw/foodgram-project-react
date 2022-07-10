@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -7,32 +9,17 @@ from food import models
 User = get_user_model()
 
 
-class DynamicFieldsModelSerializer(serializers.ModelSerializer):
-    """
-    A ModelSerializer that takes an additional 'exclude' argument
-    that controls which fields should be excluded.
-    """
-
-    def __init__(self, *args, **kwargs):
-        exclude = kwargs.pop('exclude', None)
-
-        super(DynamicFieldsModelSerializer, self).__init__(*args, **kwargs)
-
-        if exclude is not None:
-            not_allowed = set(exclude)
-            for exclude_name in not_allowed:
-                self.fields.pop(exclude_name)
-
-
-class UserSerializer(DynamicFieldsModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
+    password = serializers.CharField(write_only=True)
 
     class Meta:
-        model = User()
+        model = User
         fields = (
             'email',
+            'password',
             'id',
             'username',
             'first_name',
@@ -42,20 +29,47 @@ class UserSerializer(DynamicFieldsModelSerializer):
             'recipes_count',
         )
 
-        def get_is_subscribed(self) -> bool:
-            # TODO
-            return
+    def get_is_subscribed(self, obj: User) -> bool:
+        # subscription = models.Subscription.objects.filter(
+        #     user=self.context.get('request').user,
+        #     subscribed_to=obj
+        # )
+        # return subscription.count() != 0
+        #TODO
+        return False
 
-        def get_recipes(self, limit: int) -> 'RecipeSerializer':
-            # TODO
-            if limit < 1:
-                raise ValidationError()
-            recipes = models.Recipe.objects.filter()[:limit]
-            return RecipeSerializer(recipes, many=True).data
+    def get_recipes(self,
+                    obj: User,
+                    limit: Optional[int] = None
+                    ) -> 'RecipeShortSerializer':
+        if limit is not None and limit < 1:
+            raise ValidationError()
 
-        def get_recipes_count(self) -> int:
-            # TODO
-            return
+        recipes = models.Recipe.objects.filter(author=obj)[:limit]
+        return RecipeShortSerializer(recipes, many=True).data
+
+    def get_recipes_count(self, obj: User) -> int:
+        return models.Recipe.objects.filter(author=obj).count()
+
+
+class UserCreateSerializer(UserSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        exclude_fields = ['is_subscribed', 'recipes', 'recipes_count']
+        for exclude_name in exclude_fields:
+            self.fields.pop(exclude_name)
+
+
+class UserProfileSerializer(UserSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        exclude_fields = ['recipes', 'recipes_count']
+        for exclude_name in exclude_fields:
+            self.fields.pop(exclude_name)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -72,7 +86,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
-    author = UserSerializer()
+    author = UserProfileSerializer()
     ingredients = IngredientSerializer(many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -92,10 +106,28 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    def get_is_favorited(self) -> bool:
+    def get_is_favorited(self, obj: models.Recipe) -> bool:
         # TODO
-        return
+        return False
 
-    def get_is_in_shopping_cart(self) -> bool:
+    def get_is_in_shopping_cart(self, obj: models.Recipe) -> bool:
         # TODO
-        return
+        return False
+
+
+class RecipeShortSerializer(RecipeSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        exclude_fields = [
+            'author',
+            'tags',
+            'ingredients',
+            'text',
+            'is_favorited',
+            'is_in_shopping_cart',
+        ]
+        for exclude_name in exclude_fields:
+            self.fields.pop(exclude_name)
+

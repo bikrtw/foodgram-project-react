@@ -1,8 +1,18 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator, MinValueValidator
 from django.db import models
+from django.db.models import Q, F
+from django.utils.translation import gettext_lazy as _
 
-User = get_user_model()
+
+class User(AbstractUser):
+    email = models.EmailField(_('email address'), unique=True)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = [
+        'username',
+        'first_name',
+        'last_name',
+    ]
 
 
 class Ingredient(models.Model):
@@ -26,7 +36,7 @@ class Recipe(models.Model):
         related_name='recipes',
     )
     name = models.TextField(max_length=255, unique=True)
-    image = models.ImageField()
+    image = models.ImageField(blank=True, null=True)
     text = models.TextField()
     cooking_time = models.IntegerField(
         validators=[MinValueValidator(0)],
@@ -45,7 +55,17 @@ class Subscription(models.Model):
         related_name='subscribed',
     )
 
-    # TODO unique validation
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'subscribed_to'],
+                name='unique_subscription',
+            ),
+            models.CheckConstraint(
+                check=~Q(user=F('subscribed_to')),
+                name='no_self_subscription',
+            ),
+        ]
 
 
 class RecipeTag(models.Model):
@@ -60,7 +80,13 @@ class RecipeTag(models.Model):
         related_name='recipes',
     )
 
-    # TODO unique validation
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'tag'],
+                name='unique_recipe_tag',
+            ),
+        ]
 
 
 class ShoppingCart(models.Model):
@@ -75,7 +101,13 @@ class ShoppingCart(models.Model):
         related_name='shopping_cart_user'
     )
 
-    # TODO unique validation
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_recipe_user',
+            ),
+        ]
 
 
 class FavoriteRecipe(models.Model):
@@ -89,3 +121,32 @@ class FavoriteRecipe(models.Model):
         on_delete=models.CASCADE,
         related_name='favorites_user'
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'user'],
+                name='unique_recipe_user',
+            ),
+        ]
+
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='ingredients'
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name='recipes',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='unique_recipe_ingredient',
+            ),
+        ]

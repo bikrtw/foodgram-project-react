@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -38,9 +39,47 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
+    'djoser',
     'food',
     'api',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
+
+AUTH_USER_MODEL = 'food.User'
+
+DJOSER = {
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False,
+    'HIDE_USERS': False,
+    'SERIALIZERS': {
+        'current_user': 'api.serializers.UserCreateSerializer',
+        'user': 'api.serializers.UserCreateSerializer',
+    },
+    'PERMISSIONS': {
+        'activation': ['api.permissions.Forbidden'],
+        'password_reset': ['api.permissions.Forbidden'],
+        'password_reset_confirm': ['api.permissions.Forbidden'],
+        'set_password': ['rest_framework.permissions.IsAuthenticated'],
+        'username_reset': ['api.permissions.Forbidden'],
+        'username_reset_confirm': ['api.permissions.Forbidden'],
+        'set_username': ['api.permissions.Forbidden'],
+        'user_create': ['rest_framework.permissions.AllowAny'],
+        'user_delete': ['api.permissions.Forbidden'],
+        'user': ['rest_framework.permissions.IsAuthenticated'],
+        'user_list': ['rest_framework.permissions.AllowAny'],
+        'token_create': ['rest_framework.permissions.AllowAny'],
+        'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
+    },
+    'LOGIN_FIELD': 'email',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

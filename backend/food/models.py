@@ -17,7 +17,7 @@ class User(AbstractUser):
 
 class Ingredient(models.Model):
     name = models.TextField(max_length=255, db_index=True, unique=True)
-    unit = models.TextField(max_length=20)
+    measurement_unit = models.TextField(max_length=20)
 
 
 class Tag(models.Model):
@@ -142,6 +142,7 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
+    amount = models.IntegerField(validators=[MinValueValidator(0)])
 
     class Meta:
         constraints = [

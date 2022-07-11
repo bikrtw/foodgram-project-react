@@ -50,6 +50,8 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(
         validators=[MinValueValidator(0)],
     )
+    tags = models.ManyToManyField('Tag', through='RecipeTag',
+                                  related_name='recipes')
 
     def __str__(self):
         return f'{self.name}({self.cooking_time})'
@@ -84,16 +86,8 @@ class Subscription(models.Model):
 
 
 class RecipeTag(models.Model):
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='tags',
-    )
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE,
-        related_name='recipes',
-    )
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [

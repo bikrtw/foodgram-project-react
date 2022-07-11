@@ -14,10 +14,16 @@ class User(AbstractUser):
         'last_name',
     ]
 
+    def __str__(self):
+        return f'{self.first_name} {self.last_name} ({self.email})'
+
 
 class Ingredient(models.Model):
     name = models.TextField(max_length=255, db_index=True, unique=True)
     measurement_unit = models.TextField(max_length=20)
+
+    def __str__(self):
+        return f'{self.name}, {self.measurement_unit}'
 
 
 class Tag(models.Model):
@@ -27,6 +33,9 @@ class Tag(models.Model):
         max_length=7,
         validators=[RegexValidator(regex=r'#[0-9,A-F]{6}')],
     )
+
+    def __str__(self):
+        return self.name
 
 
 class Recipe(models.Model):
@@ -41,6 +50,9 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(
         validators=[MinValueValidator(0)],
     )
+
+    def __str__(self):
+        return f'{self.name}({self.cooking_time})'
 
 
 class Subscription(models.Model):
@@ -67,6 +79,9 @@ class Subscription(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.user} -> {self.subscribed_to}'
+
 
 class RecipeTag(models.Model):
     recipe = models.ForeignKey(
@@ -87,6 +102,9 @@ class RecipeTag(models.Model):
                 name='unique_recipe_tag',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.recipe} - {self.tag}'
 
 
 class ShoppingCart(models.Model):
@@ -109,6 +127,9 @@ class ShoppingCart(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.user}: {self.recipe}'
+
 
 class FavoriteRecipe(models.Model):
     user = models.ForeignKey(
@@ -129,6 +150,9 @@ class FavoriteRecipe(models.Model):
                 name='unique_recipe_user',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.user}: {self.recipe}'
 
 
 class RecipeIngredient(models.Model):
@@ -151,3 +175,6 @@ class RecipeIngredient(models.Model):
                 name='unique_recipe_ingredient',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.recipe}: {self.ingredient} -> {self.amount}'

@@ -3,6 +3,7 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 
 from food import models
 
@@ -35,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
         #     subscribed_to=obj
         # )
         # return subscription.count() != 0
-        #TODO
+        # TODO
         return False
 
     def get_recipes(self,
@@ -106,6 +107,27 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tag_ids = validated_data.pop('tags')
+
+        recipe = models.Recipe.objects.create(**validated_data)
+
+        for ingredient in ingredients:
+            obj = get_object_or_404(models.Ingredient, pk=ingredient.get('id'))
+            r_i, _ = models.RecipeIngredient.objects.get_or_create(
+                recipe=recipe,
+                ingredient=obj,
+                amount=ingredient.get('amount')
+            )
+
+        for tag_id in tag_ids:
+            obj = get_object_or_404(models.Tag, pk=tag_id)
+            r_t, _ = models.RecipeTag.objects.get_or_create(
+                recipe=recipe,
+                tag=obj,
+            )
+
     def get_is_favorited(self, obj: models.Recipe) -> bool:
         # TODO
         return False
@@ -130,4 +152,3 @@ class RecipeShortSerializer(RecipeSerializer):
         ]
         for exclude_name in exclude_fields:
             self.fields.pop(exclude_name)
-

@@ -88,10 +88,31 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'], name='Shopping cart')
     def shopping_cart(self, request: HttpRequest, pk: Optional[int] = None
                       ) -> Response:
+        recipe = get_object_or_404(models.Recipe, pk=pk)
         if request.method == 'POST':
-            return Response(data={'action': 'shopping_cart_add', 'pk': pk})
+            shopping_cart, created = models.ShoppingCart.objects.get_or_create(
+                user=request.user,
+                recipe=recipe,
+            )
+            if not created:
+                return response_400('Recipe already in shopping cart!')
 
-        return Response(data={'action': 'shopping_cart_delete', 'pk': pk})
+            serializer = serializers.RecipeShortSerializer(
+                recipe,
+                context={'request': self.request}
+            )
+            return Response(serializer.data)
+
+        shopping_cart = models.ShoppingCart.objects.filter(
+            user=request.user,
+            recipe=recipe,
+        )
+
+        if shopping_cart.count() == 0:
+            return response_400('No such recipe in shopping cart!')
+
+        shopping_cart[0].delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'], name='Favorite')
     def favorite(self, request: HttpRequest, pk: Optional[int] = None

@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django.contrib.auth import get_user_model
-from django.http import HttpRequest, Http404
+from django.http import HttpRequest
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -80,45 +80,6 @@ class TagViewSet(mixins.RetrieveModelMixin,
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = models.Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
-
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        ingredients = data.pop('ingredients', [])
-        tag_ids = data.pop('tags', [])
-        # TODO
-        _ = data.pop('image', None)
-
-        serializer = self.get_serializer_class()(data=data)
-        if serializer.is_valid() and tag_ids and ingredients:
-            recipe = serializer.save(author=request.user)
-            for tag_id in tag_ids:
-                tag = models.Tag.objects.filter(pk=tag_id)
-                if tag.count() == 0:
-                    recipe.delete()
-                    raise Http404(f'tag not found: {tag_id}')
-                models.RecipeTag.objects.create(recipe=recipe, tag=tag[0])
-            for ingredient in ingredients:
-                pk = ingredient.get('id')
-                amount = ingredient.get('amount')
-                obj = models.Ingredient.objects.filter(pk=pk)
-                if obj.count() == 0:
-                    recipe.delete()
-                    raise Http404(f'ingredient not found: {pk}')
-                models.RecipeIngredient.objects.create(
-                    recipe=recipe,
-                    ingredient=obj[0],
-                    amount=amount,
-                )
-
-            return Response(
-                data=serializer.data, status=status.HTTP_201_CREATED)
-
-        data = serializer.errors
-        if not tag_ids:
-            data['tags'] = ["This field is required."]
-        if not ingredients:
-            data['ingredients'] = ["This field is required."]
-        return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'], name='Download shopping cart')
     def download_shopping_cart(self, request: HttpRequest) -> Response:

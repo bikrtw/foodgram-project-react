@@ -96,10 +96,28 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
+class TagsField(serializers.Field):
+    def to_representation(self, value):
+        serializer = TagSerializer(value, many=True)
+        return serializer.data
+
+    def to_internal_value(self, data):
+        return data
+
+
+class IngredientsField(serializers.Field):
+    def to_representation(self, value):
+        serializer = RecipeIngredientSerializer(value, many=True)
+        return serializer.data
+
+    def to_internal_value(self, data):
+        return data
+
+
 class RecipeSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(required=False, many=True)
+    tags = TagsField()
     author = UserProfileSerializer(required=False)
-    ingredients = RecipeIngredientSerializer(required=False, many=True)
+    ingredients = IngredientsField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -118,26 +136,71 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    # def create(self, validated_data):
-    #     ingredients = validated_data.pop('ingredients')
-    #     tag_ids = validated_data.pop('tags')
-    #
-    #     recipe = models.Recipe.objects.create(**validated_data)
-    #
-    #     for ingredient in ingredients:
-    #         obj = get_object_or_404(models.Ingredient, pk=ingredient.get('id'))
-    #         r_i, _ = models.RecipeIngredient.objects.get_or_create(
-    #             recipe=recipe,
-    #             ingredient=obj,
-    #             amount=ingredient.get('amount')
-    #         )
-    #
-    #     for tag_id in tag_ids:
-    #         obj = get_object_or_404(models.Tag, pk=tag_id)
-    #         r_t, _ = models.RecipeTag.objects.get_or_create(
-    #             recipe=recipe,
-    #             tag=obj,
-    #         )
+    def validate_tags(self, value):
+        for pk in value:
+            tags = models.Tag.objects.filter(pk=pk)
+            if tags.count() == 0:
+                raise ValidationError(f'Tag with id {pk} does not exist')
+        return value
+
+    def validate_ingredients(self, value):
+        for elem in value:
+            pk = elem.get('id', None)
+            if pk is None:
+                raise ValidationError('Ingredient id error')
+            amount = elem.get('amount', None)
+            if amount is None:
+                raise ValidationError('Amount error')
+            ingredients = models.Ingredient.objects.filter(pk=pk)
+            if ingredients.count() == 0:
+                raise ValidationError(
+                    f'Ingredient with id {pk} does not exist')
+        return value
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tag_ids = validated_data.pop('tags')
+
+        recipe = models.Recipe.objects.create(
+            author=self.context['request'].user, **validated_data)
+
+        self.add_tags(recipe, tag_ids)
+        self.add_ingredients(recipe, ingredients)
+        return recipe
+
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tag_ids = validated_data.pop('tags')
+
+        instance.name = validated_data.get('name')
+        instance.image = validated_data.get('image')
+        instance.text = validated_data.get('text')
+        instance.cooking_time = validated_data.get('cooking_time')
+
+        models.RecipeTag.objects.filter(recipe=instance).delete()
+        self.add_tags(instance, tag_ids)
+
+        models.RecipeIngredient.objects.filter(recipe=instance).delete()
+        self.add_ingredients(instance, ingredients)
+
+        return instance
+
+    def add_tags(self, recipe, tag_ids):
+        for tag_id in tag_ids:
+            obj = get_object_or_404(models.Tag, pk=tag_id)
+            r_t, _ = models.RecipeTag.objects.get_or_create(
+                recipe=recipe,
+                tag=obj,
+            )
+
+    def add_ingredients(self, recipe, ingredients):
+        for ingredient in ingredients:
+            obj = get_object_or_404(models.Ingredient, pk=ingredient.get('id'))
+            r_i, _ = models.RecipeIngredient.objects.get_or_create(
+                recipe=recipe,
+                ingredient=obj,
+                amount=ingredient.get('amount')
+            )
 
     def get_is_favorited(self, obj: models.Recipe) -> bool:
         # TODO
@@ -146,6 +209,10 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj: models.Recipe) -> bool:
         # TODO
         return False
+
+
+# class RecipeCreateSerializer(RecipeSerializer):
+
 
 
 class RecipeShortSerializer(RecipeSerializer):

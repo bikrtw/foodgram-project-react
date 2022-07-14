@@ -97,9 +97,9 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True)
-    author = UserProfileSerializer()
-    ingredients = RecipeIngredientSerializer(many=True)
+    tags = TagSerializer(required=False, many=True)
+    author = UserProfileSerializer(required=False)
+    ingredients = RecipeIngredientSerializer(required=False, many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -118,26 +118,26 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
-    def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tag_ids = validated_data.pop('tags')
-
-        recipe = models.Recipe.objects.create(**validated_data)
-
-        for ingredient in ingredients:
-            obj = get_object_or_404(models.Ingredient, pk=ingredient.get('id'))
-            r_i, _ = models.RecipeIngredient.objects.get_or_create(
-                recipe=recipe,
-                ingredient=obj,
-                amount=ingredient.get('amount')
-            )
-
-        for tag_id in tag_ids:
-            obj = get_object_or_404(models.Tag, pk=tag_id)
-            r_t, _ = models.RecipeTag.objects.get_or_create(
-                recipe=recipe,
-                tag=obj,
-            )
+    # def create(self, validated_data):
+    #     ingredients = validated_data.pop('ingredients')
+    #     tag_ids = validated_data.pop('tags')
+    #
+    #     recipe = models.Recipe.objects.create(**validated_data)
+    #
+    #     for ingredient in ingredients:
+    #         obj = get_object_or_404(models.Ingredient, pk=ingredient.get('id'))
+    #         r_i, _ = models.RecipeIngredient.objects.get_or_create(
+    #             recipe=recipe,
+    #             ingredient=obj,
+    #             amount=ingredient.get('amount')
+    #         )
+    #
+    #     for tag_id in tag_ids:
+    #         obj = get_object_or_404(models.Tag, pk=tag_id)
+    #         r_t, _ = models.RecipeTag.objects.get_or_create(
+    #             recipe=recipe,
+    #             tag=obj,
+    #         )
 
     def get_is_favorited(self, obj: models.Recipe) -> bool:
         # TODO

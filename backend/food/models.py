@@ -45,7 +45,7 @@ class Recipe(models.Model):
         related_name='recipes',
     )
     name = models.TextField(max_length=255, unique=True)
-    image = models.ImageField(blank=True, null=True)
+    image = models.ImageField()
     text = models.TextField()
     cooking_time = models.IntegerField(
         validators=[MinValueValidator(0)],

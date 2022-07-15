@@ -1,6 +1,8 @@
+import base64
 from typing import Optional
 
 from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -114,10 +116,24 @@ class IngredientsField(serializers.Field):
         return data
 
 
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            # base64 encoded image - decode
+            format_str, img_data = data.split(';base64,')
+            ext = format_str.split('/')[-1]  # guess file extension
+            data = ContentFile(
+                base64.b64decode(img_data),
+                name='img.' + ext
+            )
+        return super().to_internal_value(data)
+
+
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagsField()
     author = UserProfileSerializer(required=False)
     ingredients = IngredientsField()
+    image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
@@ -209,10 +225,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj: models.Recipe) -> bool:
         # TODO
         return False
-
-
-# class RecipeCreateSerializer(RecipeSerializer):
-
 
 
 class RecipeShortSerializer(RecipeSerializer):

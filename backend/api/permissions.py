@@ -2,7 +2,7 @@ from rest_framework import permissions
 
 
 class Forbidden(permissions.BasePermission):
-    """Permission to disable some basic djoser views."""
+    """Permission to disable some basic djoser and other views."""
 
     def has_permission(self, request, view):
         return False

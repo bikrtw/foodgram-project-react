@@ -5,11 +5,12 @@ from django.http import HttpRequest
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from food import models
 from . import serializers
+from .permissions import AuthorOrReadOnly, Forbidden
 
 User = get_user_model()
 
@@ -88,7 +89,16 @@ class TagViewSet(mixins.RetrieveModelMixin,
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = models.Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        elif self.action in ['update', 'destroy']:
+            return [AuthorOrReadOnly()]
+        elif self.action in ['partial_update']:
+            return [Forbidden()]
+
+        return [IsAuthenticated()]
 
     def get_serializer_class(self):
         if self.action in ['shopping_cart', 'favorite']:

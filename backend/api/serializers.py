@@ -33,6 +33,10 @@ class UserSerializer(serializers.ModelSerializer):
             'recipes_count',
         )
 
+    def _exclude_fields(self, exclude):
+        for exclude_name in exclude:
+            self.fields.pop(exclude_name)
+
     def get_is_subscribed(self, obj: User) -> bool:
         user = self.context.get('request').user
         if isinstance(user, AnonymousUser):
@@ -62,20 +66,14 @@ class UserCreateSerializer(UserSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        exclude_fields = ['is_subscribed', 'recipes', 'recipes_count']
-        for exclude_name in exclude_fields:
-            self.fields.pop(exclude_name)
+        self._exclude_fields(['is_subscribed', 'recipes', 'recipes_count'])
 
 
 class UserProfileSerializer(UserSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        exclude_fields = ['recipes', 'recipes_count']
-        for exclude_name in exclude_fields:
-            self.fields.pop(exclude_name)
+        self._exclude_fields(['recipes', 'recipes_count'])
 
 
 class TagSerializer(serializers.ModelSerializer):

@@ -49,11 +49,15 @@ class UserSerializer(serializers.ModelSerializer):
         return subscription.count() != 0
 
     def get_recipes(self,
-                    obj: User,
-                    limit: Optional[int] = None
+                    obj: User
                     ) -> 'RecipeShortSerializer':
-        if limit is not None and limit < 1:
-            raise ValidationError()
+        limit = self.context['request'].query_params.get('recipes_limit')
+        if limit is not None:
+            if not limit.isdigit():
+                raise ValidationError('recipes_limit should be int!')
+            limit = int(limit)
+            if limit < 1:
+                raise ValidationError('recipes_limit should be > 0')
 
         recipes = models.Recipe.objects.filter(author=obj)[:limit]
         return RecipeShortSerializer(recipes, many=True).data

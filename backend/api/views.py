@@ -26,9 +26,8 @@ class UserViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.action == ['subscriptions']:
+        if self.action in ['subscriptions']:
             return serializers.UserSerializer
-
         return serializers.UserProfileSerializer
 
     @action(detail=False, name='Subscriptions')

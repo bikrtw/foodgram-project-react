@@ -6,13 +6,16 @@ from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
-    email = models.EmailField(_('email address'), unique=True)
+    email = models.EmailField(_('email address'), unique=True, max_length=254)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = [
         'username',
         'first_name',
         'last_name',
     ]
+
+    class Meta:
+        ordering = ['username']
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} ({self.email})'
@@ -21,6 +24,9 @@ class User(AbstractUser):
 class Ingredient(models.Model):
     name = models.TextField(max_length=255, db_index=True, unique=True)
     measurement_unit = models.TextField(max_length=20)
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
@@ -33,6 +39,9 @@ class Tag(models.Model):
         max_length=7,
         validators=[RegexValidator(regex=r'#[0-9,A-F]{6}')],
     )
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return self.name
@@ -52,6 +61,9 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField('Tag', through='RecipeTag',
                                   related_name='recipes')
+
+    class Meta:
+        ordering = ['name']
 
     def __str__(self):
         return f'{self.name}({self.cooking_time})'

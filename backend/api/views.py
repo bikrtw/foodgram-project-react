@@ -21,20 +21,28 @@ def response_400(s: str) -> Response:
     )
 
 
-class UserViewSet(viewsets.ViewSet):
+class UserViewSet(viewsets.GenericViewSet):
     queryset = User.objects.all()
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action == ['subscriptions']:
+            return serializers.UserSerializer
+
+        return serializers.UserProfileSerializer
 
     @action(detail=False, name='Subscriptions')
     def subscriptions(self, request: HttpRequest) -> Response:
         users = User.objects.filter(
             subscriptions__subscribed_to=request.user)
-        serializer = serializers.UserSerializer(
-            users,
-            context={'request': self.request},
-            many=True
-        )
-        return Response(data=serializer.data)
+
+        page = self.paginate_queryset(users)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(users, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post', 'delete'], name='Subscribe')
     def subscribe(self, request: HttpRequest, pk: Optional[int] = None
@@ -52,7 +60,7 @@ class UserViewSet(viewsets.ViewSet):
             if not created:
                 return response_400('Already subscribed!')
 
-            serializer = serializers.UserProfileSerializer(
+            serializer = self.get_serializer(
                 to_user,
                 context={'request': self.request}
             )
@@ -75,6 +83,7 @@ class TagViewSet(mixins.RetrieveModelMixin,
                  viewsets.GenericViewSet):
     serializer_class = serializers.TagSerializer
     queryset = models.Tag.objects.all()
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -133,3 +142,4 @@ class IngredientViewSet(mixins.RetrieveModelMixin,
                         viewsets.GenericViewSet):
     serializer_class = serializers.IngredientSerializer
     queryset = models.Ingredient.objects.all()
+    pagination_class = None

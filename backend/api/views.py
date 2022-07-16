@@ -89,6 +89,12 @@ class TagViewSet(mixins.RetrieveModelMixin,
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = models.Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.action in ['shopping_cart', 'favorite']:
+            return serializers.RecipeShortSerializer
+        return serializers.RecipeSerializer
 
     def update(self, request, *args, **kwargs):
         # disable partial update
@@ -111,7 +117,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             if not created:
                 return response_400('Recipe already in shopping cart!')
 
-            serializer = serializers.RecipeShortSerializer(
+            serializer = self.get_serializer(
                 recipe,
                 context={'request': self.request}
             )
@@ -131,10 +137,31 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'], name='Favorite')
     def favorite(self, request: HttpRequest, pk: Optional[int] = None
                  ) -> Response:
+        recipe = get_object_or_404(models.Recipe, pk=pk)
         if request.method == 'POST':
-            return Response(data={'action': 'shopping_cart_add', 'pk': pk})
+            favorite, created = models.FavoriteRecipe.objects.get_or_create(
+                user=request.user,
+                recipe=recipe,
+            )
+            if not created:
+                return response_400('Recipe already in favorites!')
 
-        return Response(data={'action': 'shopping_cart_delete', 'pk': pk})
+            serializer = self.get_serializer(
+                recipe,
+                context={'request': self.request}
+            )
+            return Response(serializer.data)
+
+        shopping_cart = models.FavoriteRecipe.objects.filter(
+            user=request.user,
+            recipe=recipe,
+        )
+
+        if shopping_cart.count() == 0:
+            return response_400('No such recipe in favorites!')
+
+        shopping_cart[0].delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class IngredientViewSet(mixins.RetrieveModelMixin,

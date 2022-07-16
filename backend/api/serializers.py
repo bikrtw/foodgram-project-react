@@ -2,6 +2,7 @@ import base64
 from typing import Optional
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -33,13 +34,15 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj: User) -> bool:
-        # subscription = models.Subscription.objects.filter(
-        #     user=self.context.get('request').user,
-        #     subscribed_to=obj
-        # )
-        # return subscription.count() != 0
-        # TODO
-        return False
+        user = self.context.get('request').user
+        if isinstance(user, AnonymousUser):
+            return False
+
+        subscription = models.Subscription.objects.filter(
+            user=user,
+            subscribed_to=obj
+        )
+        return subscription.count() != 0
 
     def get_recipes(self,
                     obj: User,
@@ -224,12 +227,26 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
 
     def get_is_favorited(self, obj: models.Recipe) -> bool:
-        # TODO
-        return False
+        user = self.context.get('request').user
+        if isinstance(user, AnonymousUser):
+            return False
+
+        favorite = models.FavoriteRecipe.objects.filter(
+            user=user,
+            recipe=obj
+        )
+        return favorite.count() != 0
 
     def get_is_in_shopping_cart(self, obj: models.Recipe) -> bool:
-        # TODO
-        return False
+        user = self.context.get('request').user
+        if isinstance(user, AnonymousUser):
+            return False
+
+        cart = models.ShoppingCart.objects.filter(
+            user=user,
+            recipe=obj
+        )
+        return cart.count() != 0
 
 
 class RecipeShortSerializer(RecipeSerializer):

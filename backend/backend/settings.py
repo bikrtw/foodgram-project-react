@@ -59,8 +59,8 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': False,
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        'current_user': 'api.serializers.UserCreateSerializer',
-        'user': 'api.serializers.UserCreateSerializer',
+        'current_user': 'api.serializers.UserProfileSerializer',
+        'user': 'api.serializers.UserProfileSerializer',
     },
     'PERMISSIONS': {
         'activation': ['api.permissions.Forbidden'],

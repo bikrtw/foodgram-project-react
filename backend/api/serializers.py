@@ -153,6 +153,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def validate_tags(self, value):
+        if len(value) == 0:
+            raise ValidationError('Tag list cannot be empty')
         for pk in value:
             tags = models.Tag.objects.filter(pk=pk)
             if tags.count() == 0:
@@ -160,6 +162,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         return value
 
     def validate_ingredients(self, value):
+        if len(value) == 0:
+            raise ValidationError('Ingredient list cannot be empty')
         for elem in value:
             pk = elem.get('id', None)
             if pk is None:

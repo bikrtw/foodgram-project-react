@@ -1,5 +1,4 @@
 import base64
-from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -42,11 +41,10 @@ class UserSerializer(serializers.ModelSerializer):
         if isinstance(user, AnonymousUser):
             return False
 
-        subscription = models.Subscription.objects.filter(
+        return models.Subscription.objects.filter(
             user=user,
             subscribed_to=obj
-        )
-        return subscription.count() != 0
+        ).exists()
 
     def get_recipes(self,
                     obj: User
@@ -232,23 +230,15 @@ class RecipeSerializer(serializers.ModelSerializer):
         user = self.context.get('request').user
         if isinstance(user, AnonymousUser):
             return False
-
-        favorite = models.FavoriteRecipe.objects.filter(
-            user=user,
-            recipe=obj
-        )
-        return favorite.count() != 0
+        return models.FavoriteRecipe.objects.filter(
+            user=user, recipe=obj).exists()
 
     def get_is_in_shopping_cart(self, obj: models.Recipe) -> bool:
         user = self.context.get('request').user
         if isinstance(user, AnonymousUser):
             return False
-
-        cart = models.ShoppingCart.objects.filter(
-            user=user,
-            recipe=obj
-        )
-        return cart.count() != 0
+        return models.ShoppingCart.objects.filter(
+            user=user, recipe=obj).exists()
 
 
 class RecipeShortSerializer(RecipeSerializer):

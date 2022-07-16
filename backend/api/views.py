@@ -81,6 +81,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = models.Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
 
+    def update(self, request, *args, **kwargs):
+        # disable partial update
+        kwargs['partial'] = False
+        return super().update(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'], name='Download shopping cart')
     def download_shopping_cart(self, request: HttpRequest) -> Response:
         return Response(data={'action': 'download_shopping_cart'})

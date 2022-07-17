@@ -2,7 +2,7 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
-from rest_framework import viewsets, mixins, status
+from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -87,8 +87,39 @@ class TagViewSet(mixins.RetrieveModelMixin,
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = models.Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
+
+    def get_queryset(self):
+        queryset = models.Recipe.objects.all()
+
+        is_favorited = self.request.query_params.get('is_favorited')
+        if is_favorited is not None:
+            if is_favorited == '0':
+                queryset = queryset.exclude(
+                    favorites_user__user=self.request.user)
+            elif is_favorited == '1':
+                queryset = queryset.filter(
+                    favorites_user__user=self.request.user)
+
+        is_in_shopping_cart = self.request.query_params.get(
+            'is_in_shopping_cart')
+        if is_in_shopping_cart is not None:
+            if is_in_shopping_cart == '0':
+                queryset = queryset.exclude(
+                    shopping_cart_user__user=self.request.user)
+            elif is_in_shopping_cart == '1':
+                queryset = queryset.filter(
+                    shopping_cart_user__user=self.request.user)
+
+        author_id = self.request.query_params.get('author')
+        if author_id is not None and author_id.isdigit():
+            queryset = queryset.filter(author_id=author_id)
+
+        tags = self.request.query_params.getlist('tags', [])
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags)
+
+        return queryset
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -178,4 +209,6 @@ class IngredientViewSet(mixins.RetrieveModelMixin,
                         viewsets.GenericViewSet):
     serializer_class = serializers.IngredientSerializer
     queryset = models.Ingredient.objects.all()
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('^name',)
     pagination_class = None

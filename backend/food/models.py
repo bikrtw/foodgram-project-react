@@ -6,7 +6,8 @@ from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
-    email = models.EmailField(_('email address'), unique=True, max_length=254)
+    email = models.EmailField(
+        _('email address'), unique=True, max_length=254, db_index=True)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = [
         'username',
@@ -54,7 +55,7 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
-    name = models.TextField(max_length=255, unique=True)
+    name = models.TextField(max_length=255, db_index=True, unique=True)
     image = models.ImageField()
     text = models.TextField()
     cooking_time = models.IntegerField(

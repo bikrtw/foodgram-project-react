@@ -96,20 +96,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if is_favorited is not None:
             if is_favorited == '0':
                 queryset = queryset.exclude(
-                    favorites_user__user=self.request.user)
+                    favorites__user=self.request.user)
             elif is_favorited == '1':
                 queryset = queryset.filter(
-                    favorites_user__user=self.request.user)
+                    favorites__user=self.request.user)
 
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart')
         if is_in_shopping_cart is not None:
             if is_in_shopping_cart == '0':
                 queryset = queryset.exclude(
-                    shopping_cart_user__user=self.request.user)
+                    shopping_cart__user=self.request.user)
             elif is_in_shopping_cart == '1':
                 queryset = queryset.filter(
-                    shopping_cart_user__user=self.request.user)
+                    shopping_cart__user=self.request.user)
 
         author_id = self.request.query_params.get('author')
         if author_id is not None and author_id.isdigit():

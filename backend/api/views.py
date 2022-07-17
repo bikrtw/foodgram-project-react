@@ -1,7 +1,9 @@
+import csv
 from typing import Optional
 
 from django.contrib.auth import get_user_model
-from django.http import HttpRequest
+from django.db.models import Sum, F
+from django.http import HttpRequest, HttpResponse
 from rest_framework import viewsets, mixins, status, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -142,8 +144,25 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'], name='Download shopping cart')
-    def download_shopping_cart(self, request: HttpRequest) -> Response:
-        return Response(data={'action': 'download_shopping_cart'})
+    def download_shopping_cart(self, request: HttpRequest) -> HttpResponse:
+        response = HttpResponse(content_type='text/csv')
+        response[
+            'Content-Disposition'] = 'attachment; filename="somefilename.csv"'
+
+        shopping_cart = models.Recipe.objects.filter(
+            shopping_cart__user=request.user)
+
+        ingredients = models.Ingredient.objects.filter(
+            recipes__recipe__in=shopping_cart
+        ).annotate(
+            quantity=Sum('recipes__amount')
+        ).values('name', 'quantity', unit=F('measurement_unit'))
+        if ingredients.exists():
+            writer = csv.DictWriter(response, fieldnames=ingredients[0].keys())
+            writer.writeheader()
+            writer.writerows(ingredients)
+
+        return response
 
     @action(detail=True, methods=['post', 'delete'], name='Shopping cart')
     def shopping_cart(self, request: HttpRequest, pk: Optional[int] = None

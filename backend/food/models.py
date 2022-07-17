@@ -38,6 +38,7 @@ class Tag(models.Model):
     color = models.TextField(
         max_length=7,
         validators=[RegexValidator(regex=r'#[0-9,A-F]{6}')],
+        unique=True,
     )
 
     class Meta:

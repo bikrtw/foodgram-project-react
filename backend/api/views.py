@@ -4,7 +4,7 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, F
 from django.http import HttpRequest, HttpResponse
-from rest_framework import viewsets, mixins, status, filters
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny

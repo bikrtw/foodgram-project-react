@@ -62,9 +62,8 @@ class Recipe(models.Model):
         'название', max_length=255, db_index=True, unique=True)
     image = models.ImageField()
     text = models.TextField('описание')
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveIntegerField(
         'время приготовления',
-        validators=[MinValueValidator(0)],
     )
     tags = models.ManyToManyField(
         'Tag', through='RecipeTag', related_name='recipes')
@@ -180,8 +179,7 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
-    amount = models.IntegerField(
-        'количество', validators=[MinValueValidator(0)])
+    amount = models.PositiveIntegerField('количество')
 
     class Meta:
         constraints = [

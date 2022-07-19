@@ -76,7 +76,7 @@ class UserViewSet(viewsets.GenericViewSet):
             subscribed_to=to_user,
         )
 
-        if subscription.exists():
+        if not subscription.exists():
             return response_400('Not subscribed!')
 
         subscription.first().delete()
@@ -159,7 +159,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe=recipe,
         )
 
-        if shopping_cart.exists():
+        if not shopping_cart.exists():
             return response_400('No such recipe in shopping cart!')
 
         shopping_cart.first().delete()

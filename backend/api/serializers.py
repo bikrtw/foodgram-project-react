@@ -160,7 +160,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             raise ValidationError('Tag list cannot be empty')
         for pk in value:
             tags = models.Tag.objects.filter(pk=pk)
-            if tags.count() == 0:
+            if not tags.exists():
                 raise ValidationError(f'Tag with id {pk} does not exist')
         return value
 
@@ -175,7 +175,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             if amount is None:
                 raise ValidationError('Amount error')
             ingredients = models.Ingredient.objects.filter(pk=pk)
-            if ingredients.exists():
+            if not ingredients.exists():
                 raise ValidationError(
                     f'Ingredient with id {pk} does not exist')
         return value

@@ -3,9 +3,9 @@ import base64
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.base import ContentFile
+from django.db.transaction import atomic
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import get_object_or_404
 
 from food import models
 
@@ -175,11 +175,12 @@ class RecipeSerializer(serializers.ModelSerializer):
             if amount is None:
                 raise ValidationError('Amount error')
             ingredients = models.Ingredient.objects.filter(pk=pk)
-            if ingredients.count() == 0:
+            if ingredients.exists():
                 raise ValidationError(
                     f'Ingredient with id {pk} does not exist')
         return value
 
+    @atomic
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tag_ids = validated_data.pop('tags')
@@ -191,6 +192,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         self.add_ingredients(recipe, ingredients)
         return recipe
 
+    @atomic()
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         tag_ids = validated_data.pop('tags')
@@ -210,21 +212,22 @@ class RecipeSerializer(serializers.ModelSerializer):
         return instance
 
     def add_tags(self, recipe, tag_ids):
+        links = []
         for tag_id in tag_ids:
-            obj = get_object_or_404(models.Tag, pk=tag_id)
-            r_t, _ = models.RecipeTag.objects.get_or_create(
-                recipe=recipe,
-                tag=obj,
-            )
+            obj = models.Tag.objects.get(pk=tag_id)
+            links.append(models.RecipeTag(recipe=recipe, tag=obj))
+        models.RecipeTag.objects.bulk_create(links)
 
     def add_ingredients(self, recipe, ingredients):
+        links = []
         for ingredient in ingredients:
-            obj = get_object_or_404(models.Ingredient, pk=ingredient.get('id'))
-            r_i, _ = models.RecipeIngredient.objects.get_or_create(
+            obj = models.Ingredient.objects.get(pk=ingredient.get('id'))
+            links.append(models.RecipeIngredient(
                 recipe=recipe,
                 ingredient=obj,
                 amount=ingredient.get('amount')
-            )
+            ))
+        models.RecipeIngredient.objects.bulk_create(links)
 
     def get_is_favorited(self, obj: models.Recipe) -> bool:
         user = self.context.get('request').user

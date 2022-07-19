@@ -4,14 +4,17 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, F
 from django.http import HttpRequest, HttpResponse
-from rest_framework import viewsets, status, filters
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from food import models
 from . import serializers
+from .filters import RecipeFilter
 from .permissions import AuthorOrReadOnly, Forbidden
 
 User = get_user_model()
@@ -73,10 +76,10 @@ class UserViewSet(viewsets.GenericViewSet):
             subscribed_to=to_user,
         )
 
-        if subscription.count() == 0:
+        if subscription.exists():
             return response_400('Not subscribed!')
 
-        subscription[0].delete()
+        subscription.first().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -88,37 +91,15 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.RecipeSerializer
+    queryset = models.Recipe.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def get_queryset(self):
         queryset = models.Recipe.objects.all()
-
-        is_favorited = self.request.query_params.get('is_favorited')
-        if is_favorited is not None:
-            if is_favorited == '0':
-                queryset = queryset.exclude(
-                    favorites__user=self.request.user)
-            elif is_favorited == '1':
-                queryset = queryset.filter(
-                    favorites__user=self.request.user)
-
-        is_in_shopping_cart = self.request.query_params.get(
-            'is_in_shopping_cart')
-        if is_in_shopping_cart is not None:
-            if is_in_shopping_cart == '0':
-                queryset = queryset.exclude(
-                    shopping_cart__user=self.request.user)
-            elif is_in_shopping_cart == '1':
-                queryset = queryset.filter(
-                    shopping_cart__user=self.request.user)
-
-        author_id = self.request.query_params.get('author')
-        if author_id is not None and author_id.isdigit():
-            queryset = queryset.filter(author_id=author_id)
-
-        tags = self.request.query_params.getlist('tags', [])
-        if tags:
-            queryset = queryset.filter(tags__slug__in=tags)
-
+        # tags = self.request.query_params.getlist('tags', [])
+        # if tags:
+        #     queryset = queryset.filter(tags__slug__in=tags)
         return queryset
 
     def get_permissions(self):
@@ -185,10 +166,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe=recipe,
         )
 
-        if shopping_cart.count() == 0:
+        if shopping_cart.exists():
             return response_400('No such recipe in shopping cart!')
 
-        shopping_cart[0].delete()
+        shopping_cart.first().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post', 'delete'], name='Favorite')
@@ -224,6 +205,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.IngredientSerializer
     queryset = models.Ingredient.objects.all()
-    filter_backends = (filters.SearchFilter,)
+    filter_backends = (SearchFilter,)
     search_fields = ('^name',)
     pagination_class = None

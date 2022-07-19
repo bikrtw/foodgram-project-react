@@ -23,8 +23,9 @@ class User(AbstractUser):
 
 
 class Ingredient(models.Model):
-    name = models.TextField(max_length=255, db_index=True, unique=True)
-    measurement_unit = models.TextField(max_length=20)
+    name = models.TextField(
+        'название', max_length=255, db_index=True, unique=True)
+    measurement_unit = models.TextField('единица измерения', max_length=20)
 
     class Meta:
         ordering = ['name']
@@ -34,9 +35,11 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.TextField(max_length=255, db_index=True, unique=True)
-    slug = models.SlugField(unique=True)
+    name = models.TextField(
+        'название', max_length=255, db_index=True, unique=True)
+    slug = models.SlugField('слаг', unique=True)
     color = models.TextField(
+        'цвет',
         max_length=7,
         validators=[RegexValidator(regex=r'#[0-9,A-F]{6}')],
         unique=True,
@@ -55,15 +58,17 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
-    name = models.TextField(max_length=255, db_index=True, unique=True)
+    name = models.TextField(
+        'название', max_length=255, db_index=True, unique=True)
     image = models.ImageField()
-    text = models.TextField()
+    text = models.TextField('описание')
     cooking_time = models.IntegerField(
+        'время приготовления',
         validators=[MinValueValidator(0)],
     )
-    tags = models.ManyToManyField('Tag', through='RecipeTag',
-                                  related_name='recipes')
-    pub_date = models.DateTimeField(auto_created=True)
+    tags = models.ManyToManyField(
+        'Tag', through='RecipeTag', related_name='recipes')
+    pub_date = models.DateTimeField('дата создания', auto_created=True)
 
     class Meta:
         ordering = ['-pub_date']
@@ -175,7 +180,8 @@ class RecipeIngredient(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
-    amount = models.IntegerField(validators=[MinValueValidator(0)])
+    amount = models.IntegerField(
+        'количество', validators=[MinValueValidator(0)])
 
     class Meta:
         constraints = [

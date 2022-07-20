@@ -1,0 +1,3 @@
+pk,author_id,name,text,cooking_time
+1,1,recipe1,"test description",1
+2,1,recipe2,"test description2",2

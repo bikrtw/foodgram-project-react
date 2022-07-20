@@ -10,36 +10,45 @@
 ### Как запустить проект в докере:
 
 Клонировать репозиторий и перейти в него в командной строке:
-
 ```
 git clone https://github.com/bikrtw/foodgram-project-react.git
 cd foodgram-project-react
 ```
 
 Перейти в директорию, содержащую файл docker-compose.yaml:
-
 ```
 cd infra
 ```
 
 Запустить docker-compose
-
 ```
 sudo docker-compose up -d
 ```
 
-Выполнить миграции и собрать статику, создать админскую учетку:
-
+Выполнить миграции и собрать статику:
 ```
 sudo docker-compose exec web python manage.py migrate
 sudo docker-compose exec web python manage.py collectstatic --no-input
+```
+
+(Опционально) Заполнить базу тестовыми данными и потестить функционал:
+
+Тестовый пользователь: ```1@1.com``` Пароль: ```123```
+```
+sudo docker-compose exec web python manage.py load_csv
+```
+
+Для очистки базы:
+```
+sudo docker-compose exec web python manage.py clear_db
+```
+
+(Опционально) Создать админскую учетку:
+```
 sudo docker-compose exec web python manage.py createsuperuser
 ```
 
-
-
-Восстановить базу из бекапа (при необходимости):
-
+(Опционально) Восстановить базу из бекапа:
 ```
 sudo docker-compose exec web python manage.py loaddata dump.json
 ```

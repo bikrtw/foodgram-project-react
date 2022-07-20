@@ -95,6 +95,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
+    def get_queryset(self):
+        queryset = models.Recipe.objects.all()
+
+        tags = self.request.query_params.getlist('tags', [])
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags).distinct()
+        return queryset
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
@@ -119,7 +127,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request: HttpRequest) -> HttpResponse:
         response = HttpResponse(content_type='text/csv')
         response[
-            'Content-Disposition'] = 'attachment; filename="somefilename.csv"'
+            'Content-Disposition'] = 'attachment; filename="cart.csv"'
 
         shopping_cart = models.Recipe.objects.filter(
             shopping_cart__user=request.user)

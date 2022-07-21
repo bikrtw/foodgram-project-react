@@ -196,10 +196,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe=recipe,
         )
 
-        if shopping_cart.count() == 0:
+        if not shopping_cart.exists():
             return response_400('No such recipe in favorites!')
 
-        shopping_cart[0].delete()
+        shopping_cart.first().delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

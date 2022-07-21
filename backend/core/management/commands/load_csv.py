@@ -4,6 +4,8 @@ import os
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
+from django.core.management.color import no_style
+from django.db import connection
 
 from food import models
 
@@ -57,3 +59,12 @@ class Command(BaseCommand):
                         print(e)
             final_count = model.objects.count()
             print(f'{model.__name__} loaded: {final_count - initial_count}')
+
+        print('Resetting pk sequences for PostgreSQL')
+
+        sequence_sql = connection.ops.sequence_reset_sql(
+            no_style(), [model for model in files_models.values()])
+        with connection.cursor() as cursor:
+            for sql in sequence_sql:
+                cursor.execute(sql)
+        print('Done')

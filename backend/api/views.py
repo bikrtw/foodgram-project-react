@@ -39,7 +39,7 @@ class UserViewSet(viewsets.GenericViewSet):
     @action(detail=False, name='Subscriptions')
     def subscriptions(self, request: HttpRequest) -> Response:
         users = User.objects.filter(
-            subscriptions__subscribed_to=request.user)
+            subscribed__user=request.user)
 
         page = self.paginate_queryset(users)
         if page is not None:

@@ -197,9 +197,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         tag_ids = validated_data.pop('tags')
 
-        for attr in ['name', 'image', 'text', 'cooking_time']:
+        for attr in ['name', 'text', 'cooking_time']:
             val = validated_data.get(attr)
             setattr(instance, attr, val)
+
+        instance.image = validated_data.get('image', instance.image)
 
         models.RecipeTag.objects.filter(recipe=instance).delete()
         self.add_tags(instance, tag_ids)

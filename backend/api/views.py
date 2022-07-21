@@ -116,11 +116,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return serializers.RecipeShortSerializer
         return serializers.RecipeSerializer
 
-    def update(self, request, *args, **kwargs):
-        # disable partial update
-        kwargs['partial'] = False
-        return super().update(request, *args, **kwargs)
-
     @action(detail=False, methods=['get'], name='Download shopping cart')
     def download_shopping_cart(self, request: HttpRequest) -> HttpResponse:
         response = HttpResponse(content_type='text/csv')

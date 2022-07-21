@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from food import models
 from . import serializers
 from .filters import RecipeFilter
-from .permissions import AuthorOrReadOnly, Forbidden
+from .permissions import AuthorOrReadOnly
 
 User = get_user_model()
 
@@ -106,10 +106,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
-        elif self.action in ['update', 'destroy']:
+        elif self.action in ['update', 'destroy', 'partial_update']:
             return [AuthorOrReadOnly()]
-        elif self.action in ['partial_update']:
-            return [Forbidden()]
 
         return [IsAuthenticated()]
 

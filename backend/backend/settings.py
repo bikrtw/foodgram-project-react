@@ -50,6 +50,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.MyPageNumberPagination',
+    'SEARCH_PARAM': 'name',
 }
 
 AUTH_USER_MODEL = 'food.User'

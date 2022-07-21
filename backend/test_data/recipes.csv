@@ -1,3 +1,20 @@
 pk,author_id,name,image,text,cooking_time
 1,1,recipe1,img1.png,"test description",1
 2,1,recipe2,img2.png,"test description2",2
+3,1,recipe3,img1.png,"test description3",2
+4,1,recipe4,img2.png,"test description4",2
+5,1,recipe5,img1.png,"test description5",2
+6,1,recipe6,img2.png,"test description6",2
+7,1,recipe7,img1.png,"test description7",2
+8,1,recipe8,img2.png,"test description8",2
+9,1,recipe9,img1.png,"test description9",2
+10,1,recipe10,img2.png,"test description2",2
+11,1,recipe11,img1.png,"test description2",2
+12,1,recipe12,img2.png,"test description2",2
+13,1,recipe13,img1.png,"test description2",2
+14,1,recipe14,img2.png,"test description2",2
+15,1,recipe15,img1.png,"test description2",2
+16,1,recipe16,img2.png,"test description2",2
+17,1,recipe17,img1.png,"test description2",2
+18,1,recipe18,img2.png,"test description2",2
+19,1,recipe19,img1.png,"test description2",2
